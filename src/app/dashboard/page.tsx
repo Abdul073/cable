@@ -28,7 +28,7 @@ const Page = async ({searchParams}: PageProps) => {
     })
 
     if(!user) {
-        redirect("/welcome")
+      return  redirect("/welcome")
     }
 
     const intent = searchParams.intent
