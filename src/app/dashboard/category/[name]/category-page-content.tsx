@@ -3,8 +3,8 @@
 import { EventCategory, Event } from "@prisma/client"
 import { useQuery } from "@tanstack/react-query"
 import { EmptyCategoryState } from "./empty-category-state"
-import { useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useMemo, useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { client } from "@/app/lib/client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
@@ -105,8 +105,35 @@ export const CategoryPageContent = ({hasEvents: initialHasEvents, category}: Cat
 
 
     
+    const [sorting, setSorting] = useState<SortingState>([]) 
+    const [columnFilters , setColumnFilters] = useState<ColumnFiltersState>([])
+    const table = useReactTable({
+        data: data?.events || [],
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        onSortingChange: setSorting,
+        getSortedRowModel: getSortedRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        manualPagination: true,
+        pageCount: Math.ceil((data?.eventsCount || 0) / pagination.pageSize),
+        onPaginationChange: setPagination,
+        state: {
+            sorting,
+            columnFilters,
+            pagination,
+        }
+    })
 
-
+    const router = useRouter()
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        searchParams.set("page", (pagination.pageIndex + 1).toString())
+        searchParams.set("limit", pagination.pageSize.toString())
+        router.push(`?${searchParams.toString()}`, { scroll: false })
+      }, [pagination, router])
+      
     const numericFieldSums = useMemo(() => {
         if(!data?.events || data.events.length === 0) return {}
 
@@ -153,26 +180,7 @@ export const CategoryPageContent = ({hasEvents: initialHasEvents, category}: Cat
 
 
 
-    const [sorting, setSorting] = useState<SortingState>([]) 
-    const [columnFilters , setColumnFilters] = useState<ColumnFiltersState>([])
-    const table = useReactTable({
-        data: data?.events || [],
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        manualPagination: true,
-        pageCount: Math.ceil((data?.eventsCount || 0) / pagination.pageSize),
-        onPaginationChange: setPagination,
-        state: {
-            sorting,
-            columnFilters,
-            pagination,
-        }
-    })
+    
 
 
     const NumericFieldSumCards = () => {
